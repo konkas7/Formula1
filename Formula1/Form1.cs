@@ -62,13 +62,32 @@ namespace Formula1
         }
 
 
-        private void LoadTeamData()
+        private void LoadTeamData(string filtroNomeTeam = "", string filtroSede = "")
         {
             using (MySqlConnection conn = new MySqlConnection(ConnectionString))
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM team;";
+                string sql = "SELECT * FROM team";
+
+                // Aggiungi filtri, se specificati
+                if (!string.IsNullOrEmpty(filtroNomeTeam))
+                {
+                    sql += $" WHERE nome_team LIKE '%{filtroNomeTeam}%'";
+                }
+
+                if (!string.IsNullOrEmpty(filtroSede))
+                {
+                    if (sql.Contains("WHERE"))
+                    {
+                        sql += $" AND sede LIKE '%{filtroSede}%'";
+                    }
+                    else
+                    {
+                        sql += $" WHERE sede LIKE '%{filtroSede}%'";
+                    }
+                }
+
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 MySqlDataAdapter MyAdapter = new MySqlDataAdapter();
                 MyAdapter.SelectCommand = cmd;
@@ -79,6 +98,7 @@ namespace Formula1
                 conn.Close();
             }
         }
+
 
         private void LoadGareVinteData()
         {
@@ -182,6 +202,12 @@ namespace Formula1
         private void button1_Click(object sender, EventArgs e)
         {
             LoadPilotiData(textBox1.Text);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            LoadTeamData(textBox2.Text, textBox3.Text);
+
         }
     }
 }
