@@ -100,14 +100,47 @@ namespace Formula1
         }
 
 
-        private void LoadGareVinteData()
+        private void LoadGareVinteData(string filtroNomeGara = "", DateTime? filtroDataGara = null)
         {
             using (MySqlConnection conn = new MySqlConnection(ConnectionString))
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM gare_vinte;";
+                string sql = "SELECT * FROM gare_vinte";
+
+                // Aggiungi filtri, se specificati
+                if (!string.IsNullOrEmpty(filtroNomeGara))
+                {
+                    sql += " WHERE nome_gara LIKE @filtroNomeGara";
+                }
+
+                if (filtroDataGara.HasValue)
+                {
+                    if (string.IsNullOrEmpty(filtroNomeGara))
+                    {
+                        sql += " WHERE";
+                    }
+                    else
+                    {
+                        sql += " AND";
+                    }
+
+                    sql += " data_gara = @filtroDataGara";
+                }
+
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
+
+                // Aggiungi i parametri per i filtri
+                if (!string.IsNullOrEmpty(filtroNomeGara))
+                {
+                    cmd.Parameters.AddWithValue("@filtroNomeGara", $"%{filtroNomeGara}%");
+                }
+
+                if (filtroDataGara.HasValue)
+                {
+                    cmd.Parameters.AddWithValue("@filtroDataGara", filtroDataGara.Value.Date.ToString("yyyy-MM-dd"));
+                }
+
                 MySqlDataAdapter MyAdapter = new MySqlDataAdapter();
                 MyAdapter.SelectCommand = cmd;
                 DataTable dati = new DataTable();
@@ -118,7 +151,9 @@ namespace Formula1
             }
         }
 
-        private void LoadPilotiTeam()
+
+
+        private void LoadPilotiTeam(string filtroCognomePilota = "", string filtroNomeTeam = "")
         {
             try
             {
@@ -127,10 +162,27 @@ namespace Formula1
                     conn.Open();
 
                     string sql = "SELECT piloti.cognome, team.nome_team, piloti_team.anno_ingresso " +
-              "FROM piloti_team " +
-              "JOIN piloti ON piloti_team.pilota_id = piloti.pilota_id " +
-              "JOIN team ON piloti_team.team_id = team.team_id;";
+                                 "FROM piloti_team " +
+                                 "JOIN piloti ON piloti_team.pilota_id = piloti.pilota_id " +
+                                 "JOIN team ON piloti_team.team_id = team.team_id";
 
+                    // Aggiungi filtri, se specificati
+                    if (!string.IsNullOrEmpty(filtroCognomePilota))
+                    {
+                        sql += $" WHERE piloti.cognome LIKE '%{filtroCognomePilota}%'";
+                    }
+
+                    if (!string.IsNullOrEmpty(filtroNomeTeam))
+                    {
+                        if (sql.Contains("WHERE"))
+                        {
+                            sql += $" AND team.nome_team LIKE '%{filtroNomeTeam}%'";
+                        }
+                        else
+                        {
+                            sql += $" WHERE team.nome_team LIKE '%{filtroNomeTeam}%'";
+                        }
+                    }
 
                     MySqlCommand cmd = new MySqlCommand(sql, conn);
                     MySqlDataAdapter MyAdapter = new MySqlDataAdapter();
@@ -147,6 +199,7 @@ namespace Formula1
                 MessageBox.Show($"Errore durante il caricamento dei dati da piloti_team: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
 
 
@@ -208,6 +261,54 @@ namespace Formula1
         {
             LoadTeamData(textBox2.Text, textBox3.Text);
 
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string filtroNomeGara = textBox4.Text;
+            DateTime filtroDataGara = dateTimePicker1.Checked ? dateTimePicker1.Value : DateTime.MinValue;
+
+            // Se la data del filtro è la data attuale, imposta il valore su DateTime.MinValue
+            if (filtroDataGara.Date == DateTime.Now.Date)
+            {
+                filtroDataGara = DateTime.MinValue;
+            }
+
+            LoadGareVinteData(filtroNomeGara, filtroDataGara);
+        }
+
+        private void tabPage3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox6_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            // Aggiungi controlli grafici per il filtro dei piloti team (TextBox per il cognome del pilota e TextBox per il nome del team)
+            string filtroCognomePilota = textBox5.Text;
+            string filtroNomeTeam = textBox6.Text;
+
+            LoadPilotiTeam(filtroCognomePilota, filtroNomeTeam);
         }
     }
 }
