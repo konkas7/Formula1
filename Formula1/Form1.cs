@@ -106,26 +106,17 @@ namespace Formula1
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM gare_vinte";
+                string sql = "SELECT * FROM gare_vinte WHERE 1=1";
 
                 // Aggiungi filtri, se specificati
                 if (!string.IsNullOrEmpty(filtroNomeGara))
                 {
-                    sql += " WHERE nome_gara LIKE @filtroNomeGara";
+                    sql += " AND nome_gara LIKE @filtroNomeGara";
                 }
 
-                if (filtroDataGara.HasValue)
+                if (filtroDataGara.HasValue && filtroDataGara.Value.Date != DateTime.MinValue.Date)
                 {
-                    if (string.IsNullOrEmpty(filtroNomeGara))
-                    {
-                        sql += " WHERE";
-                    }
-                    else
-                    {
-                        sql += " AND";
-                    }
-
-                    sql += " data_gara = @filtroDataGara";
+                    sql += " AND data_gara = @filtroDataGara";
                 }
 
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
@@ -136,7 +127,7 @@ namespace Formula1
                     cmd.Parameters.AddWithValue("@filtroNomeGara", $"%{filtroNomeGara}%");
                 }
 
-                if (filtroDataGara.HasValue)
+                if (filtroDataGara.HasValue && filtroDataGara.Value.Date != DateTime.MinValue.Date)
                 {
                     cmd.Parameters.AddWithValue("@filtroDataGara", filtroDataGara.Value.Date.ToString("yyyy-MM-dd"));
                 }
@@ -150,6 +141,7 @@ namespace Formula1
                 conn.Close();
             }
         }
+
 
 
 
@@ -278,13 +270,22 @@ namespace Formula1
             string filtroNomeGara = textBox4.Text;
             DateTime filtroDataGara = dateTimePicker1.Checked ? dateTimePicker1.Value : DateTime.MinValue;
 
-            // Se la data del filtro è la data attuale, imposta il valore su DateTime.MinValue
-            if (filtroDataGara.Date == DateTime.Now.Date)
+            // Se la data del filtro è la data di default, imposta il valore su DateTime.MinValue
+            if (filtroDataGara.Date == dateTimePicker1.MinDate)
             {
                 filtroDataGara = DateTime.MinValue;
             }
 
-            LoadGareVinteData(filtroNomeGara, filtroDataGara);
+            // Usa i filtri solo se sono stati forniti valori diversi dai valori di default
+            if (!string.IsNullOrEmpty(filtroNomeGara) || filtroDataGara != DateTime.MinValue)
+            {
+                LoadGareVinteData(filtroNomeGara, filtroDataGara);
+            }
+            else
+            {
+                // Se entrambi i filtri sono vuoti o impostati ai valori di default, carica tutti i dati
+                LoadGareVinteData();
+            }
         }
 
         private void tabPage3_Click(object sender, EventArgs e)
