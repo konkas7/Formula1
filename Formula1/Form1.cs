@@ -106,17 +106,28 @@ namespace Formula1
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM gare_vinte WHERE 1=1";
+                string sql = "SELECT gare_vinte.nome_gara, gare_vinte.data_gara, piloti.cognome AS vincitore_cognome " +
+                             "FROM gare_vinte " +
+                             "LEFT JOIN piloti ON gare_vinte.vincitore_id = piloti.pilota_id";
 
                 // Aggiungi filtri, se specificati
                 if (!string.IsNullOrEmpty(filtroNomeGara))
                 {
-                    sql += " AND nome_gara LIKE @filtroNomeGara";
+                    sql += " WHERE gare_vinte.nome_gara LIKE @filtroNomeGara";
                 }
 
-                if (filtroDataGara.HasValue && filtroDataGara.Value.Date != DateTime.MinValue.Date)
+                if (filtroDataGara.HasValue && filtroDataGara != DateTime.MinValue)
                 {
-                    sql += " AND data_gara = @filtroDataGara";
+                    if (!string.IsNullOrEmpty(filtroNomeGara))
+                    {
+                        sql += " AND";
+                    }
+                    else
+                    {
+                        sql += " WHERE";
+                    }
+
+                    sql += " gare_vinte.data_gara = @filtroDataGara";
                 }
 
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
@@ -127,7 +138,7 @@ namespace Formula1
                     cmd.Parameters.AddWithValue("@filtroNomeGara", $"%{filtroNomeGara}%");
                 }
 
-                if (filtroDataGara.HasValue && filtroDataGara.Value.Date != DateTime.MinValue.Date)
+                if (filtroDataGara.HasValue && filtroDataGara != DateTime.MinValue)
                 {
                     cmd.Parameters.AddWithValue("@filtroDataGara", filtroDataGara.Value.Date.ToString("yyyy-MM-dd"));
                 }
@@ -141,6 +152,7 @@ namespace Formula1
                 conn.Close();
             }
         }
+
 
 
 
